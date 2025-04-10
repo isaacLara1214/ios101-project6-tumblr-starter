@@ -14,10 +14,21 @@ class ViewController: UIViewController, UITableViewDataSource {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        navigationController?.navigationBar.prefersLargeTitles = true
         tableView.dataSource = self
         fetchPosts()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        // Customary to call the overridden method on `super` any time you override a method.
+        super.viewWillAppear(animated)
 
+        // get the index path for the selected row
+        if let selectedIndexPath = tableView.indexPathForSelectedRow {
+
+            // Deselect the currently selected row
+            tableView.deselectRow(at: selectedIndexPath, animated: animated)
+        }
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -61,15 +72,11 @@ class ViewController: UIViewController, UITableViewDataSource {
                 let blog = try JSONDecoder().decode(Blog.self, from: data)
 
                 DispatchQueue.main.async { [weak self] in
-
                     let posts = blog.response.posts
                     self?.posts = posts
                     self?.tableView.reloadData()
 
                     print("✅ We got \(posts.count) posts!")
-                    for post in posts {
-                        print("🍏 Summary: \(post.summary)")
-                    }
                 }
 
             } catch {
@@ -78,4 +85,24 @@ class ViewController: UIViewController, UITableViewDataSource {
         }
         session.resume()
     }
+
+    // MARK: - Navigation
+
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // MARK: - Pass the selected movie data
+
+        // Get the index path for the selected row.
+        // `indexPathForSelectedRow` returns an optional `indexPath`, so we'll unwrap it with a guard.
+        guard let selectedIndexPath = tableView.indexPathForSelectedRow else { return }
+
+        // Get the selected movie from the movies array using the selected index path's row
+        let selectedPost = posts[selectedIndexPath.row]
+
+        // Get access to the detail view controller via the segue's destination. (guard to unwrap the optional)
+        guard let detailViewController = segue.destination as? DetailedViewController else { return }
+
+        detailViewController.post = selectedPost
+    }
+    
+    
 }
